@@ -308,11 +308,16 @@ function renderTreemap(node) {
       }
     });
 
-  // Add labels
+  // Add labels with dynamic text color
   cells.append('text')
     .attr('class', 'treemap-label')
     .attr('x', 4)
     .attr('y', 14)
+    .style('fill', d => {
+      const sizeRatio = (d.data.size - minSize) / sizeRange;
+      const bgColor = getColorForItem(d.data, sizeRatio);
+      return getTextColorForBackground(bgColor);
+    })
     .text(d => {
       const width = d.x1 - d.x0;
       const height = d.y1 - d.y0;
@@ -330,6 +335,11 @@ function renderTreemap(node) {
     .attr('y', 28)
     .style('font-size', '10px')
     .style('opacity', 0.8)
+    .style('fill', d => {
+      const sizeRatio = (d.data.size - minSize) / sizeRange;
+      const bgColor = getColorForItem(d.data, sizeRatio);
+      return getTextColorForBackground(bgColor);
+    })
     .text(d => {
       const width = d.x1 - d.x0;
       const height = d.y1 - d.y0;
