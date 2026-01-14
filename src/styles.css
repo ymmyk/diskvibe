@@ -13,15 +13,6 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --selection: #FFD700;
   --treemap-border: #333333;
-
-  /* Heat map colors for treemap */
-  --heat-cold: #00BFFF;
-  --heat-warm: #FF4500;
-
-  /* File type colors */
-  --type-media: #32CD32;
-  --type-apps: #9370DB;
-  --type-system: #808080;
 }
 
 [data-theme="light"] {
@@ -428,29 +419,6 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-/* Color legend */
-.color-legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.legend-gradient {
-  width: 80px;
-  height: 12px;
-  border-radius: 2px;
-  background: linear-gradient(to right, var(--heat-cold), var(--heat-warm));
-}
-
-.legend-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 80px;
-  font-size: 0.65rem;
 }
 
 .treemap-label {

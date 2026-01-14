@@ -8,7 +8,7 @@ let navigationStack = [];
 let isScanning = false;
 let progressInterval = null;
 let currentSort = 'size';
-let colorByType = false;
+let colorByType = true;
 let isDarkMode = true;
 
 // DOM Elements
@@ -30,7 +30,6 @@ const totalFoldersEl = document.getElementById('totalFolders');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const themeIcon = document.getElementById('themeIcon');
 const colorModeToggle = document.getElementById('colorModeToggle');
-const colorLegend = document.getElementById('colorLegend');
 
 // Utility functions
 function formatSize(bytes) {
@@ -45,18 +44,16 @@ function formatNumber(num) {
   return num.toLocaleString();
 }
 
-// Heat map color interpolation (blue to orange/red)
-function getHeatColor(ratio) {
-  // ratio: 0 = smallest, 1 = largest
-  // Interpolate from #00BFFF (deep sky blue) to #FF4500 (orange red)
-  const cold = { r: 0, g: 191, b: 255 };
-  const warm = { r: 255, g: 69, b: 0 };
-
-  const r = Math.round(cold.r + (warm.r - cold.r) * ratio);
-  const g = Math.round(cold.g + (warm.g - cold.g) * ratio);
-  const b = Math.round(cold.b + (warm.b - cold.b) * ratio);
-
-  return `rgb(${r}, ${g}, ${b})`;
+// Random muted color palette
+function getRandomColor() {
+  const colors = [
+    '#5B8FB9', '#7C93C3', '#9A86A4', '#C47AFF', '#6C9BCF',
+    '#E8A87C', '#C38D9E', '#85C88A', '#7EB5A6', '#D4A5A5',
+    '#89ABE3', '#AA96DA', '#FCBAD3', '#A8D8EA', '#95E1D3',
+    '#F38181', '#FCE38A', '#EAFFD0', '#B5EAEA', '#F9ED69',
+    '#6EB5FF', '#FF6F91', '#FF9671', '#FFC75F', '#845EC2'
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
 }
 
 // File type categorization
@@ -96,24 +93,32 @@ function getFileTypeColor(category) {
   return colors[category] || colors.other;
 }
 
-function getColorForItem(item, sizeRatio) {
+function getColorForItem(item) {
   if (colorByType) {
     const category = getFileTypeCategory(item);
     return getFileTypeColor(category);
   }
-  // Heat map based on size ratio
-  return getHeatColor(sizeRatio);
+  return getRandomColor();
 }
 
 // Determine if text should be white or black based on background color
 function getTextColorForBackground(bgColor) {
-  // Parse rgb color
-  const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (!match) return '#FFFFFF';
+  let r, g, b;
 
-  const r = parseInt(match[1]);
-  const g = parseInt(match[2]);
-  const b = parseInt(match[3]);
+  // Parse hex color
+  if (bgColor.startsWith('#')) {
+    const hex = bgColor.slice(1);
+    r = parseInt(hex.substr(0, 2), 16);
+    g = parseInt(hex.substr(2, 2), 16);
+    b = parseInt(hex.substr(4, 2), 16);
+  } else {
+    // Parse rgb color
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (!match) return '#FFFFFF';
+    r = parseInt(match[1]);
+    g = parseInt(match[2]);
+    b = parseInt(match[3]);
+  }
 
   // Calculate relative luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -245,12 +250,6 @@ function renderTreemap(node) {
     .attr('class', 'treemap-tooltip')
     .style('display', 'none');
 
-  // Calculate size range for heat map coloring
-  const sizes = leaves.map(d => d.data.size);
-  const minSize = Math.min(...sizes);
-  const maxSize = Math.max(...sizes);
-  const sizeRange = maxSize - minSize || 1;
-
   // Add rectangles
   const cells = svg.selectAll('g')
     .data(leaves)
@@ -258,14 +257,14 @@ function renderTreemap(node) {
     .append('g')
     .attr('transform', d => `translate(${d.x0},${d.y0})`);
 
+  // Pre-compute colors for each cell
+  const cellColors = leaves.map(d => getColorForItem(d.data));
+
   cells.append('rect')
     .attr('class', 'treemap-node')
     .attr('width', d => Math.max(0, d.x1 - d.x0))
     .attr('height', d => Math.max(0, d.y1 - d.y0))
-    .attr('fill', d => {
-      const sizeRatio = (d.data.size - minSize) / sizeRange;
-      return getColorForItem(d.data, sizeRatio);
-    })
+    .attr('fill', (d, i) => cellColors[i])
     .style('cursor', d => d.data.is_directory ? 'pointer' : 'default')
     .on('mouseover', function(event, d) {
       const percent = node.size > 0 ? ((d.data.size / node.size) * 100).toFixed(1) : 0;
@@ -313,11 +312,7 @@ function renderTreemap(node) {
     .attr('class', 'treemap-label')
     .attr('x', 4)
     .attr('y', 14)
-    .style('fill', d => {
-      const sizeRatio = (d.data.size - minSize) / sizeRange;
-      const bgColor = getColorForItem(d.data, sizeRatio);
-      return getTextColorForBackground(bgColor);
-    })
+    .style('fill', (d, i) => getTextColorForBackground(cellColors[i]))
     .text(d => {
       const width = d.x1 - d.x0;
       const height = d.y1 - d.y0;
@@ -335,11 +330,7 @@ function renderTreemap(node) {
     .attr('y', 28)
     .style('font-size', '10px')
     .style('opacity', 0.8)
-    .style('fill', d => {
-      const sizeRatio = (d.data.size - minSize) / sizeRange;
-      const bgColor = getColorForItem(d.data, sizeRatio);
-      return getTextColorForBackground(bgColor);
-    })
+    .style('fill', (d, i) => getTextColorForBackground(cellColors[i]))
     .text(d => {
       const width = d.x1 - d.x0;
       const height = d.y1 - d.y0;
@@ -558,13 +549,10 @@ themeToggleBtn.addEventListener('click', () => {
   }
 });
 
-// Color mode toggle (heat map vs file type)
+// Color mode toggle (file type vs random)
 colorModeToggle.addEventListener('click', () => {
   colorByType = !colorByType;
   colorModeToggle.classList.toggle('active', colorByType);
-
-  // Update legend visibility
-  colorLegend.style.display = colorByType ? 'none' : 'flex';
 
   // Re-render treemap with new colors
   if (currentNode) {
