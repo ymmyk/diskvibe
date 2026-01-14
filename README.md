@@ -13,7 +13,17 @@ A fast, visual disk space analyzer for macOS and Linux.
 - Sortable file list by size, name, or file count
 - Dark/light mode toggle
 
-## Installation
+## Download
+
+Grab the latest release from the [Releases page](https://github.com/yourusername/diskvibe/releases):
+
+- **macOS**: `.dmg` (Apple Silicon & Intel)
+- **Linux**: `.AppImage`, `.deb`
+- **Windows**: `.msi`, `.exe`
+
+> **Note**: The app is unsigned. On macOS, right-click the app and select "Open" on first launch. On Windows, click "More info" then "Run anyway" on the SmartScreen prompt.
+
+## Building from Source
 
 ```bash
 # Install dependencies

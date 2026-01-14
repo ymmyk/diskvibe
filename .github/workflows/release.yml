@@ -55,7 +55,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'DiskVibe v__VERSION__'
-          releaseBody: 'Download the .dmg file for your Mac architecture.'
+          releaseBody: 'See assets below for macOS (.dmg), Linux (.AppImage, .deb, .rpm), and Windows (.msi) downloads.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
