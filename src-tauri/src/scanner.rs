@@ -241,3 +241,61 @@ fn num_cpus() -> usize {
         .map(|n| n.get())
         .unwrap_or(4)
 }
+
+/// Rescan a single path and return updated FileNode, or None if it no longer exists
+pub fn rescan_path(path: &str) -> Option<FileNode> {
+    let path_buf = PathBuf::from(path);
+
+    if !path_buf.exists() {
+        return None;
+    }
+
+    let metadata = path_buf.metadata().ok()?;
+    let name = path_buf
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| path.to_string());
+
+    if metadata.is_dir() {
+        // Scan the directory
+        let mut total_size = 0u64;
+        let mut total_file_count = 0u64;
+        let mut children: Vec<FileNode> = Vec::new();
+
+        let walk = WalkDir::new(&path_buf)
+            .skip_hidden(false)
+            .min_depth(1)
+            .max_depth(1);
+
+        for entry in walk.into_iter().flatten() {
+            let child_path = entry.path();
+            let child_path_str = child_path.to_string_lossy().to_string();
+
+            if let Some(child_node) = rescan_path(&child_path_str) {
+                total_size += child_node.size;
+                total_file_count += child_node.file_count;
+                children.push(child_node);
+            }
+        }
+
+        children.sort_by(|a, b| b.size.cmp(&a.size));
+
+        Some(FileNode {
+            name,
+            path: path.to_string(),
+            size: total_size,
+            file_count: total_file_count,
+            is_directory: true,
+            children: Some(children),
+        })
+    } else {
+        Some(FileNode {
+            name,
+            path: path.to_string(),
+            size: metadata.len(),
+            file_count: 1,
+            is_directory: false,
+            children: None,
+        })
+    }
+}

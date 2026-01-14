@@ -8,8 +8,8 @@ let navigationStack = [];
 let isScanning = false;
 let progressInterval = null;
 let currentSort = 'size';
-let colorByType = true;
-let isDarkMode = true;
+let colorByType = false;
+let isDarkMode = false;
 
 // DOM Elements
 const selectFolderBtn = document.getElementById('selectFolderBtn');
@@ -176,6 +176,19 @@ function renderFileList(node) {
             ${item.is_directory ? `<span>${formatNumber(item.file_count)} files</span>` : ''}
           </div>
         </div>
+        <button class="btn-action btn-reload" data-path="${item.path}" title="Reload">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <button class="btn-action btn-reveal" data-path="${item.path}" title="Reveal in file manager">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
         <div class="size-bar-container">
           <div class="size-bar" style="width: ${barWidth}%"></div>
         </div>
@@ -183,9 +196,12 @@ function renderFileList(node) {
     `;
   }).join('');
 
-  // Add click handlers
+  // Add click handlers for navigation
   fileList.querySelectorAll('.file-item').forEach(el => {
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (e) => {
+      // Don't navigate if clicking action buttons
+      if (e.target.closest('.btn-action')) return;
+
       const path = el.dataset.path;
       const isDir = el.dataset.isDir === 'true';
 
@@ -194,6 +210,49 @@ function renderFileList(node) {
         if (childNode && childNode.children) {
           navigateTo(childNode);
         }
+      }
+    });
+  });
+
+  // Add click handlers for reload buttons
+  fileList.querySelectorAll('.btn-reload').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const path = btn.dataset.path;
+      try {
+        const updated = await invoke('rescan_item', { path });
+        const index = currentNode.children.findIndex(c => c.path === path);
+
+        if (index !== -1) {
+          if (updated) {
+            // Update the item in place
+            currentNode.children[index] = updated;
+            // Recalculate parent size
+            currentNode.size = currentNode.children.reduce((sum, c) => sum + c.size, 0);
+            currentNode.file_count = currentNode.children.reduce((sum, c) => sum + c.file_count, 0);
+          } else {
+            // Item no longer exists, remove it
+            currentNode.children.splice(index, 1);
+            currentNode.size = currentNode.children.reduce((sum, c) => sum + c.size, 0);
+            currentNode.file_count = currentNode.children.reduce((sum, c) => sum + c.file_count, 0);
+          }
+          updateView();
+        }
+      } catch (err) {
+        console.error('Failed to reload item:', err);
+      }
+    });
+  });
+
+  // Add click handlers for reveal buttons
+  fileList.querySelectorAll('.btn-reveal').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const path = btn.dataset.path;
+      try {
+        await invoke('reveal_in_file_manager', { path });
+      } catch (err) {
+        console.error('Failed to reveal file:', err);
       }
     });
   });
@@ -371,9 +430,23 @@ function renderBreadcrumb() {
       <span class="breadcrumb-item" data-index="${index}">${part.name}</span>
       ${!isLast ? '<span class="breadcrumb-separator">/</span>' : ''}
     `;
-  }).join('');
+  }).join('') + `
+    <button class="btn-breadcrumb-action" id="breadcrumbRefresh" title="Refresh current folder">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    </button>
+    <button class="btn-breadcrumb-action" id="breadcrumbReveal" title="Open in file manager">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <line x1="10" y1="14" x2="21" y2="3"></line>
+      </svg>
+    </button>
+  `;
 
-  // Add click handlers
+  // Add click handlers for breadcrumb items
   breadcrumb.querySelectorAll('.breadcrumb-item').forEach((el, index) => {
     el.addEventListener('click', () => {
       const targetNode = parts[index].node;
@@ -384,6 +457,36 @@ function renderBreadcrumb() {
         updateView();
       }
     });
+  });
+
+  // Refresh current folder
+  document.getElementById('breadcrumbRefresh').addEventListener('click', async () => {
+    if (!currentNode) return;
+    try {
+      const updated = await invoke('rescan_item', { path: currentNode.path });
+      if (updated) {
+        // Update current node in place
+        Object.assign(currentNode, updated);
+        updateView();
+      } else {
+        // Folder was deleted, go back
+        if (navigationStack.length > 0) {
+          zoomOut();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh folder:', err);
+    }
+  });
+
+  // Reveal current folder in file manager
+  document.getElementById('breadcrumbReveal').addEventListener('click', async () => {
+    if (!currentNode) return;
+    try {
+      await invoke('reveal_in_file_manager', { path: currentNode.path });
+    } catch (err) {
+      console.error('Failed to reveal folder:', err);
+    }
   });
 
   // Show/hide zoom out button
@@ -569,6 +672,11 @@ window.addEventListener('resize', () => {
       renderTreemap(currentNode);
     }
   }, 250);
+});
+
+// Disable default context menu
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
 });
 
 // Initialize
