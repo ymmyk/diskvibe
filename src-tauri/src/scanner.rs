@@ -2,6 +2,8 @@ use jwalk::WalkDir;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(unix)]
+use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -113,7 +115,20 @@ impl Scanner {
             };
 
             let size = if metadata.is_file() {
-                metadata.len()
+                // Use actual disk usage instead of logical size.
+                // This handles cloud files (OneDrive, iCloud) that report full size
+                // but aren't actually stored locally.
+                // st_blocks is always in 512-byte units per POSIX standard.
+                #[cfg(unix)]
+                const BLOCK_SIZE: u64 = 512;
+                #[cfg(unix)]
+                {
+                    metadata.blocks() * BLOCK_SIZE
+                }
+                #[cfg(not(unix))]
+                {
+                    metadata.len()
+                }
             } else {
                 0
             };
@@ -289,10 +304,18 @@ pub fn rescan_path(path: &str) -> Option<FileNode> {
             children: Some(children),
         })
     } else {
+        // Use actual disk usage instead of logical size (512-byte blocks per POSIX)
+        #[cfg(unix)]
+        const BLOCK_SIZE: u64 = 512;
+        #[cfg(unix)]
+        let size = metadata.blocks() * BLOCK_SIZE;
+        #[cfg(not(unix))]
+        let size = metadata.len();
+
         Some(FileNode {
             name,
             path: path.to_string(),
-            size: metadata.len(),
+            size,
             file_count: 1,
             is_directory: false,
             children: None,
