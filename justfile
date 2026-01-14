@@ -54,3 +54,13 @@ code:
 # Attach to or create a zellij session
 attach:
     zellij attach diskvibe --create
+
+# Tag and push a release (usage: just release 0.2.0)
+release version:
+    @echo "Updating version to {{version}}..."
+    sed -i '' 's/"version": "[^"]*"/"version": "{{version}}"/' src-tauri/tauri.conf.json
+    git add src-tauri/tauri.conf.json
+    git commit -m "Release v{{version}}"
+    git tag "v{{version}}"
+    git push origin main --tags
+    @echo "Release v{{version}} tagged and pushed!"
