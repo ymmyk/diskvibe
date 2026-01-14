@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DiskVibe - Disk Space Analyzer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <div class="header-left">
+          <h1 class="title">DiskVibe</h1>
+          <div class="breadcrumb" id="breadcrumb"></div>
+        </div>
+        <div class="header-right">
+          <button class="btn btn-primary" id="selectFolderBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Select Folder
+          </button>
+          <button class="btn btn-secondary" id="cancelBtn" style="display: none;">
+            Cancel
+          </button>
+          <button class="btn btn-icon" id="themeToggleBtn" title="Toggle light/dark mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon">
+              <circle cx="12" cy="12" r="5"></circle>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="progress-container" id="progressContainer" style="display: none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-info">
+          <span id="progressFiles">0 files scanned</span>
+          <span id="progressSize">0 B</span>
+          <span id="progressPath" class="progress-path"></span>
+        </div>
+      </div>
+
+      <main class="main-content">
+        <div class="panel panel-list">
+          <div class="panel-header">
+            <h2>Files & Folders</h2>
+            <div class="sort-controls">
+              <label>Sort by:</label>
+              <select id="sortSelect">
+                <option value="size">Size</option>
+                <option value="name">Name</option>
+                <option value="files">File Count</option>
+              </select>
+            </div>
+          </div>
+          <div class="file-list" id="fileList">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <p>Select a folder to analyze disk usage</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-treemap">
+          <div class="panel-header">
+            <h2>Treemap Visualization</h2>
+            <div class="treemap-controls">
+              <div class="toggle-group">
+                <span>By Type</span>
+                <div class="toggle-switch" id="colorModeToggle" title="Toggle between size-based and file type colors"></div>
+              </div>
+              <div class="color-legend" id="colorLegend">
+                <span>Small</span>
+                <div class="legend-gradient"></div>
+                <span>Large</span>
+              </div>
+              <button class="btn btn-sm" id="zoomOutBtn" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="M21 21l-4.35-4.35M8 11h6"></path>
+                </svg>
+                Zoom Out
+              </button>
+            </div>
+          </div>
+          <div class="treemap-container" id="treemapContainer">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <p>Treemap will appear here after scanning</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <div class="stats" id="stats">
+          <span id="totalSize">Total: --</span>
+          <span id="totalFiles">Files: --</span>
+          <span id="totalFolders">Folders: --</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
