@@ -89,6 +89,7 @@ impl Scanner {
         // First pass: collect all entries with their sizes
         let walk = WalkDir::new(&root)
             .skip_hidden(false)
+            .follow_links(false) // Don't follow symlinks to avoid cycles and double-counting
             .parallelism(jwalk::Parallelism::RayonNewPool(num_cpus()));
 
         for entry in walk {
