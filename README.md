@@ -1,6 +1,6 @@
 # DiskVibe
 
-A fast, visual disk space analyzer for macOS and Linux.
+A fast, visual disk space analyzer for macOS, Linux, and Windows.
 
 ![DiskVibe Screenshot](screenshot.png)
 
