@@ -218,7 +218,22 @@ function renderFileList(node) {
   fileList.querySelectorAll('.btn-reload').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      if (isScanning) return;
+
       const path = btn.dataset.path;
+
+      // Show progress bar and cancel button
+      isScanning = true;
+      selectFolderBtn.disabled = true;
+      cancelBtn.style.display = 'inline-flex';
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressFiles.textContent = 'Refreshing...';
+      progressSize.textContent = '';
+      progressPath.textContent = path;
+
+      startProgressPolling();
+
       try {
         const updated = await invoke('rescan_item', { path });
         const index = currentNode.children.findIndex(c => c.path === path);
@@ -240,6 +255,12 @@ function renderFileList(node) {
         }
       } catch (err) {
         console.error('Failed to reload item:', err);
+      } finally {
+        stopProgressPolling();
+        progressContainer.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        selectFolderBtn.disabled = false;
+        isScanning = false;
       }
     });
   });
@@ -463,19 +484,17 @@ function renderBreadcrumb() {
   document.getElementById('breadcrumbRefresh').addEventListener('click', async () => {
     if (!currentNode || isScanning) return;
 
-    // Show progress bar
+    // Show progress bar and cancel button
     isScanning = true;
+    selectFolderBtn.disabled = true;
+    cancelBtn.style.display = 'inline-flex';
     progressContainer.style.display = 'block';
     progressFill.style.width = '0%';
     progressFiles.textContent = 'Refreshing...';
     progressSize.textContent = '';
     progressPath.textContent = currentNode.path;
 
-    // Animate progress bar
-    const animateProgress = setInterval(() => {
-      const currentWidth = parseFloat(progressFill.style.width) || 0;
-      progressFill.style.width = ((currentWidth + 5) % 100) + '%';
-    }, 100);
+    startProgressPolling();
 
     try {
       const updated = await invoke('rescan_item', { path: currentNode.path });
@@ -491,9 +510,14 @@ function renderBreadcrumb() {
       }
     } catch (err) {
       console.error('Failed to refresh folder:', err);
+      if (err !== 'Scan cancelled') {
+        // Only log non-cancellation errors
+      }
     } finally {
-      clearInterval(animateProgress);
+      stopProgressPolling();
       progressContainer.style.display = 'none';
+      cancelBtn.style.display = 'none';
+      selectFolderBtn.disabled = false;
       isScanning = false;
     }
   });

@@ -1,7 +1,7 @@
 mod scanner;
 
 use parking_lot::RwLock;
-use scanner::{rescan_path, FileNode, ScanProgress, Scanner};
+use scanner::{FileNode, ScanProgress, Scanner};
 use std::sync::Arc;
 use tauri::State;
 
@@ -36,8 +36,9 @@ async fn get_home_directory() -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn rescan_item(path: String) -> Result<Option<FileNode>, String> {
-    Ok(rescan_path(&path))
+async fn rescan_item(path: String, state: State<'_, AppState>) -> Result<Option<FileNode>, String> {
+    let scanner = state.scanner.read();
+    scanner.rescan(&path)
 }
 
 #[tauri::command]

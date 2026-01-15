@@ -258,68 +258,98 @@ fn num_cpus() -> usize {
         .unwrap_or(4)
 }
 
-/// Rescan a single path and return updated FileNode, or None if it no longer exists
-pub fn rescan_path(path: &str) -> Option<FileNode> {
-    let path_buf = PathBuf::from(path);
-
-    if !path_buf.exists() {
-        return None;
+impl Scanner {
+    /// Rescan a single path using this scanner's cancellation support
+    pub fn rescan(&self, path: &str) -> Result<Option<FileNode>, String> {
+        self.reset();
+        self.rescan_internal(path)
     }
 
-    let metadata = path_buf.metadata().ok()?;
-    let name = path_buf
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| path.to_string());
-
-    if metadata.is_dir() {
-        // Scan the directory
-        let mut total_size = 0u64;
-        let mut total_file_count = 0u64;
-        let mut children: Vec<FileNode> = Vec::new();
-
-        let walk = WalkDir::new(&path_buf)
-            .skip_hidden(false)
-            .min_depth(1)
-            .max_depth(1);
-
-        for entry in walk.into_iter().flatten() {
-            let child_path = entry.path();
-            let child_path_str = child_path.to_string_lossy().to_string();
-
-            if let Some(child_node) = rescan_path(&child_path_str) {
-                total_size += child_node.size;
-                total_file_count += child_node.file_count;
-                children.push(child_node);
-            }
+    fn rescan_internal(&self, path: &str) -> Result<Option<FileNode>, String> {
+        if self.cancel_flag.load(Ordering::SeqCst) {
+            return Err("Scan cancelled".to_string());
         }
 
-        children.sort_by(|a, b| b.size.cmp(&a.size));
+        let path_buf = PathBuf::from(path);
 
-        Some(FileNode {
-            name,
-            path: path.to_string(),
-            size: total_size,
-            file_count: total_file_count,
-            is_directory: true,
-            children: Some(children),
-        })
-    } else {
-        // Use actual disk usage instead of logical size (512-byte blocks per POSIX)
-        #[cfg(unix)]
-        const BLOCK_SIZE: u64 = 512;
-        #[cfg(unix)]
-        let size = metadata.blocks() * BLOCK_SIZE;
-        #[cfg(not(unix))]
-        let size = metadata.len();
+        if !path_buf.exists() {
+            return Ok(None);
+        }
 
-        Some(FileNode {
-            name,
-            path: path.to_string(),
-            size,
-            file_count: 1,
-            is_directory: false,
-            children: None,
-        })
+        let metadata = match path_buf.metadata() {
+            Ok(m) => m,
+            Err(_) => return Ok(None),
+        };
+        let name = path_buf
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string());
+
+        // Update progress
+        self.files_scanned.fetch_add(1, Ordering::SeqCst);
+        if self.files_scanned.load(Ordering::SeqCst) % 100 == 0 {
+            *self.current_path.write() = path.to_string();
+        }
+
+        if metadata.is_dir() {
+            // Scan the directory
+            let mut total_size = 0u64;
+            let mut total_file_count = 0u64;
+            let mut children: Vec<FileNode> = Vec::new();
+
+            let walk = WalkDir::new(&path_buf)
+                .skip_hidden(false)
+                .follow_links(false)
+                .min_depth(1)
+                .max_depth(1);
+
+            for entry in walk.into_iter().flatten() {
+                if self.cancel_flag.load(Ordering::SeqCst) {
+                    return Err("Scan cancelled".to_string());
+                }
+
+                let child_path = entry.path();
+                let child_path_str = child_path.to_string_lossy().to_string();
+
+                if let Some(child_node) = self.rescan_internal(&child_path_str)? {
+                    total_size += child_node.size;
+                    total_file_count += child_node.file_count;
+                    children.push(child_node);
+                }
+            }
+
+            children.sort_by(|a, b| b.size.cmp(&a.size));
+
+            self.total_size.fetch_add(total_size, Ordering::SeqCst);
+
+            Ok(Some(FileNode {
+                name,
+                path: path.to_string(),
+                size: total_size,
+                file_count: total_file_count,
+                is_directory: true,
+                children: Some(children),
+            }))
+        } else {
+            // Use actual disk usage instead of logical size (512-byte blocks per POSIX)
+            #[cfg(unix)]
+            const BLOCK_SIZE: u64 = 512;
+            #[cfg(unix)]
+            let size = metadata.blocks() * BLOCK_SIZE;
+            #[cfg(not(unix))]
+            let size = metadata.len();
+
+            self.total_size.fetch_add(size, Ordering::SeqCst);
+
+            Ok(Some(FileNode {
+                name,
+                path: path.to_string(),
+                size,
+                file_count: 1,
+                is_directory: false,
+                children: None,
+            }))
+        }
     }
 }
+
