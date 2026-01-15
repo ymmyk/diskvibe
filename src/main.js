@@ -461,7 +461,22 @@ function renderBreadcrumb() {
 
   // Refresh current folder
   document.getElementById('breadcrumbRefresh').addEventListener('click', async () => {
-    if (!currentNode) return;
+    if (!currentNode || isScanning) return;
+
+    // Show progress bar
+    isScanning = true;
+    progressContainer.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressFiles.textContent = 'Refreshing...';
+    progressSize.textContent = '';
+    progressPath.textContent = currentNode.path;
+
+    // Animate progress bar
+    const animateProgress = setInterval(() => {
+      const currentWidth = parseFloat(progressFill.style.width) || 0;
+      progressFill.style.width = ((currentWidth + 5) % 100) + '%';
+    }, 100);
+
     try {
       const updated = await invoke('rescan_item', { path: currentNode.path });
       if (updated) {
@@ -476,6 +491,10 @@ function renderBreadcrumb() {
       }
     } catch (err) {
       console.error('Failed to refresh folder:', err);
+    } finally {
+      clearInterval(animateProgress);
+      progressContainer.style.display = 'none';
+      isScanning = false;
     }
   });
 
