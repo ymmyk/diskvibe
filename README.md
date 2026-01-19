@@ -15,7 +15,7 @@ A fast, visual disk space analyzer for macOS, Linux, and Windows.
 
 ## Download
 
-Grab the latest release from the [Releases page](https://github.com/yourusername/diskvibe/releases):
+Grab the latest release from the [Releases page](https://github.com/ymmyk/diskvibe/releases):
 
 - **macOS**: `.dmg` (Apple Silicon & Intel)
 - **Linux**: `.AppImage`, `.deb`
