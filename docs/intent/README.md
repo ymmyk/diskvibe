@@ -12,6 +12,6 @@ Raw ideas — **not** authoritative specs. Convert via interview/thin-feature pa
 
 | Note | Summary | Status |
 |---|---|---|
-| [[fast-path-scan]] | Platform-native fast inventory | Intent only |
+| [[fast-path-scan]] | macOS bulk-attrs fast path; silent jwalk fallback; unique-physical | **Promoted** → [[specs/features/fast-path-scan/README]] |
 | [[file-deletion]] | Delete from app (destructive) | Intent only — major decision |
 | [[export-reports]] | Export usage reports | Intent only |

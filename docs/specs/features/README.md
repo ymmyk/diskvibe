@@ -47,6 +47,12 @@ Brainstorm under `docs/intent/` without a feature folder until build work starts
 
 Use `pocs/` for exploratory work. POCs are non-production by default.
 
+## Feature index
+
+| Feature | Maturity | Implementation | Verification | Notes |
+|---|---|---|---|---|
+| [[fast-path-scan/README\|fast-path-scan]] | 2 | `not-started` | `unverified` | macOS bulk attrs; headless POC first |
+
 ## Feature Work Queue
 
 Goals should scan feature folders for `status.md` files. A feature needs work when:

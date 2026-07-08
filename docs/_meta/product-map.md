@@ -33,13 +33,19 @@ DiskVibe is a local desktop app that helps users understand disk usage: pick a f
 
 | Operation | Purpose | Primary actors | Specs |
 |---|---|---|---|
-| `op.scan-directory` | Full parallel scan of a root path | Local user | [[specs/bootstrap/operations]] |
+| `op.scan-directory` | Full parallel scan of a root path | Local user | [[specs/bootstrap/operations]]; strategy delta [[specs/features/fast-path-scan/README]] |
 | `op.cancel-scan` | Abort in-flight scan | Local user | [[specs/bootstrap/operations]] |
 | `op.get-scan-progress` | Poll scan progress | UI | [[specs/bootstrap/operations]] |
 | `op.get-cached-tree` | Read last cached full tree | UI | [[specs/bootstrap/operations]] |
-| `op.rescan-item` | Rescan one path / subtree | Local user | [[specs/bootstrap/operations]] |
+| `op.rescan-item` | Rescan one path / subtree | Local user | [[specs/bootstrap/operations]]; same strategy as full scan (fast-path feature) |
 | `op.reveal-in-file-manager` | Show path in OS file manager | Local user | [[specs/bootstrap/operations]] |
 | `op.get-home-directory` | Default starting home path | UI | [[specs/bootstrap/operations]] |
+
+## Features (in progress / planned)
+
+| Feature | Status | Specs |
+|---|---|---|
+| Fast-path scan (macOS bulk attrs) | Spec draft, not implemented | [[specs/features/fast-path-scan/README]] |
 
 ## Control Planes
 

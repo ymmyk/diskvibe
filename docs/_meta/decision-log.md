@@ -55,3 +55,50 @@ Reason: Thin feature path; avoid empty ceremony.
 Affected specs:
 - [[intent/README]]
 Revisit if: A future is selected for implementation.
+
+## 2026-07-08 - Fast-path scan intent enriched (not yet a feature)
+
+Type: Minor (documentation / intent)
+Status: Accepted
+Context: Stub intent for platform fast scanning was too thin to drive POCs or major decisions.
+Decision: Expand [[intent/fast-path-scan]] with competitive techniques, provisional platform order (macOS bulk attrs → Windows MFT → Linux research), fallback-to-jwalk requirement, same `FileNode`/IPC surface, sizing parity with allocated-block Unix semantics, and POC shape. No feature folder or code until major decisions approved.
+Reason: Intent inbox should be build-ready thinking without pretending to be authoritative specs.
+Affected specs:
+- [[intent/fast-path-scan]]
+- [[intent/README]]
+- [[_meta/open-questions]]
+Revisit if: User prioritizes feature; then convert via thin feature + POC and resolve major oq.fast-path-*.
+
+## 2026-07-08 - Fast-path scan major decisions locked
+
+Type: Major (product behavior for upcoming feature)
+Status: Accepted
+Context: User answered open questions for [[intent/fast-path-scan]].
+Decision:
+1. **macOS only** for current work (`getattrlistbulk`); Windows/Linux later on proper machines.
+2. **Silent jwalk fallback** (no required UI indicator).
+3. **Exact size parity** preferred vs baseline sizing contract (`st_blocks*512` on Unix).
+4. **Unique physical** for hard links / clones (not path double-count). May require updating jwalk baseline to match.
+5. **Rescan uses default scanner** (same strategy select + fallback as full scan).
+6. **Windows elevation / MFT** deferred.
+Also: no headless CLI today; POC must add **SSH-friendly scan bench** (`cargo test` and/or `cargo run --example scan_bench`) so work can proceed without GUI.
+Reason: Unblocks thin feature + macOS POC without multi-platform scope creep.
+Affected specs:
+- [[intent/fast-path-scan]]
+- [[_meta/open-questions]]
+Revisit if: APFS clone accounting proves too hard for v1; or Windows work starts.
+
+## 2026-07-08 - Fast-path scan promoted to thin feature
+
+Type: Minor (process / spec structure)
+Status: Accepted
+Context: User requested promote after decisions locked.
+Decision: Create thin feature at maturity 2 under `docs/specs/features/fast-path-scan/` (README with state/ops/acceptance, status, work-log) plus POC stubs `headless-scan-bench` and `macos-getattrlistbulk`. No production code in this step. Intent note remains source history; feature folder is authoritative for desired behavior.
+Reason: Thin feature path; ready for backend/POC implementation without full ceremony or empty control-plane stubs.
+Affected specs:
+- [[specs/features/fast-path-scan/README]]
+- [[specs/features/fast-path-scan/status]]
+- [[intent/fast-path-scan]]
+- [[loop/backlog]]
+- [[loop/current-goal]]
+Revisit if: Scope expands to Windows/Linux or new IPC commands.
