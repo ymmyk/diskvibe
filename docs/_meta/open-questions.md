@@ -27,5 +27,5 @@ tags:
 | ID | Question | Blocks | Notes |
 |---|---|---|---|
 | oq.progress-complete-flag | `get_progress` always sets `is_complete: false`; UI infers completion from scan return. Intentional? | Spec accuracy | Confirm or fix later |
-| oq.rescan-cache | `rescan_item` does not update `cached_tree`; only full `scan_directory` does. Intentional? | Spec accuracy | Documented as current |
+| oq.rescan-cache | ~~`rescan_item` does not update `cached_tree`~~ | — | **Resolved 2026-07-08**: rescan patches `cached_tree` and recomputes ancestors |
 | oq.symlink-policy | `follow_links(false)` — should broken/link targets ever be shown specially? | Edge UX | Current: no follow |

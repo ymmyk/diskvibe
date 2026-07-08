@@ -41,7 +41,7 @@ Session-scoped filesystem tree and scan progress. No application database.
 | Field | Type | Notes |
 |---|---|---|
 | `scanner` | `Scanner` | Cancel flag + progress atomics |
-| `cached_tree` | `Option<FileNode>` | Last successful full `scan_directory` result only |
+| `cached_tree` | `Option<FileNode>` | Last successful full `scan_directory` result, kept in sync by `rescan_item` patches |
 
 ## Relationships
 

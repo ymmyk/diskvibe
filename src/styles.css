@@ -585,3 +585,35 @@ body {
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* Tree view styles */
+.file-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.expand-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.expand-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.expand-spacer {
+  width: 20px;
+  flex-shrink: 0;
+}

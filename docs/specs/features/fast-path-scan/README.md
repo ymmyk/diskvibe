@@ -111,7 +111,7 @@ No new domain verbs for product UI. Implementation detail under existing ops:
 |---|---|
 | Inputs / outputs | Unchanged |
 | Algorithm | **Same strategy select + fallback** as full scan for that path/subtree |
-| Cache | Still does not update `cached_tree` (bootstrap gap; out of scope unless fixed separately) |
+| Cache | Patches `cached_tree` when path is under the cached root (same as generic rescan) |
 
 ### `op.cancel-scan` / `op.get-scan-progress`
 

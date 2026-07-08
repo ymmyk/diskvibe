@@ -8,6 +8,18 @@ tags:
 
 # Decision Log
 
+## 2026-07-08 - Rescan patches session cache
+
+Type: Minor (behavior fix)
+Status: Accepted
+Context: Tree expand/list reload + `get_cached_tree` restore left `cached_tree` stale after `rescan_item`, so webview restore undid partial rescans.
+Decision: `rescan_item` patches the matching node in `cached_tree` (or removes it / clears root cache on `None`) and recomputes ancestor size/file_count. Frontend applies the same mutation to the live JS tree for nested reloads.
+Reason: Cache exists for session restore; restore must match post-rescan UI state.
+Affected specs:
+- [[specs/bootstrap/operations]]
+- [[specs/bootstrap/state]]
+Revisit if: Cache becomes durable or multi-root.
+
 ## 2026-07-08 - Brownfield reconstruct from shipped code
 
 Type: Minor (reconstructive documentation)

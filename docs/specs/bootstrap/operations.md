@@ -65,7 +65,7 @@ Intent: return last fully scanned tree if present.
 | Preconditions | none |
 | State changes | none |
 | Errors | none expected |
-| Notes | Only populated by successful `op.scan-directory`, not by rescan |
+| Notes | Populated by successful `op.scan-directory`; patched by successful `op.rescan-item` when path is under the cached root |
 
 ## `op.rescan-item`
 
@@ -76,7 +76,7 @@ Intent: rescan a single path (file or directory subtree).
 | Inputs | `path: string` |
 | Outputs | `Option<FileNode>` — `None` if path missing or metadata unreadable |
 | Preconditions | none required at API; missing path → `None` |
-| State changes | Resets progress/cancel at start; does **not** update `cached_tree` |
+| State changes | Resets progress/cancel at start; if `cached_tree` is present and contains `path`, patches that node (or removes it when result is `None`) and recomputes ancestor `size`/`file_count`; if rescan path equals the cached root and result is `None`, clears `cached_tree` |
 | Errors | `"Scan cancelled"` |
 | Invariants | Same sizing/sort rules as full scan for the returned subtree |
 
